@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Habit Flow 2026</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --primary: #6366f1;
+            --success: #22c55e;
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0; padding: 0;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        header {
+            background: var(--card);
+            width: 100%;
+            padding: 15px 0;
+            position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .month-nav {
+            display: flex; overflow-x: auto; padding: 10px; gap: 8px;
+            scrollbar-width: none;
+        }
+        .month-nav::-webkit-scrollbar { display: none; }
+
+        .month-btn {
+            padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border);
+            background: #fff; white-space: nowrap; font-size: 0.85rem; font-weight: 600;
+        }
+        .month-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .stats-bar {
+            width: 90%; max-width: 450px; background: linear-gradient(135deg, #4f46e5, #818cf8);
+            color: white; padding: 20px; border-radius: 20px; margin: 15px 0;
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.2);
+        }
+
+        .week-card {
+            width: 90%; max-width: 450px; background: var(--card);
+            border-radius: 15px; padding: 15px; margin-bottom: 25px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+
+        .week-title { font-weight: 800; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; }
+
+        .habit-item { margin-bottom: 20px; }
+        .habit-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px; }
+        .habit-name { font-size: 0.95rem; font-weight: 700; }
+        .habit-status { font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 10px; background: #f1f5f9; }
+        .status-done { background: #dcfce7; color: #166534; }
+
+        .daily-grid {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
+        }
+
+        .day-box {
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+        }
+        .day-label { font-size: 0.65rem; color: var(--text-sub); font-weight: bold; }
+
+        input[type="checkbox"] {
+            width: 28px; height: 28px; cursor: pointer; accent-color: var(--success);
+            margin: 0; border-radius: 6px;
+        }
+
+        .progress-container {
+            height: 4px; width: 100%; background: #e2e8f0; border-radius: 2px; margin-top: 8px; overflow: hidden;
+        }
+        .progress-bar { height: 100%; background: var(--primary); transition: width 0.3s ease; }
+        .progress-bar.complete { background: var(--success); }
+    </style>
+</head>
+<body>
+
+<header>
+    <h3 id="month-label" style="margin:0 0 10px 0;">January 2026</h3>
+    <div class="month-nav" id="monthNav"></div>
+</header>
+
+<div class="stats-bar">
+    <div style="font-size: 0.85rem; opacity: 0.9;">Monthly Consistency</div>
+    <div id="monthly-score" style="font-size: 1.6rem; font-weight: 800; margin: 4px 0;">0 / 4 Weeks Hit</div>
+    <div style="font-size: 0.75rem; opacity: 0.8;">Target: Achieve all 6 habits to win the week.</div>
+</div>
+
+<div id="weeks-container" style="width: 100%; display: flex; flex-direction: column; align-items: center;"></div>
+
+<script>
+    const habitData = [
+        { name: "AI Training", target: 7, desc: "15m/day" },
+        { name: "Crypto Reading", target: 7, desc: "15m/day" },
+        { name: "Oura Activity", target: 4, desc: "4/week" },
+        { name: "Stretch", target: 3, desc: "3/week" },
+        { name: "Meditation", target: 1, desc: "1/week" },
+        { name: "Foot Separator", target: 1, desc: "1/week" }
+    ];
+
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const days = ["M", "T", "W", "T", "F", "S", "S"];
+    let currentMonth = 0;
+
+    function init() {
+        const nav = document.getElementById('monthNav');
+        months.forEach((m, i) => {
+            const btn = document.createElement('button');
+            btn.className = `month-btn ${i === 0 ? 'active' : ''}`;
+            btn.innerText = m;
+            btn.onclick = () => {
+                document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentMonth = i;
+                render();
+            };
+            nav.appendChild(btn);
+        });
+        render();
+    }
+
+    function render() {
+        document.getElementById('month-label').innerText = `${months[currentMonth]} 2026`;
+        const container = document.getElementById('weeks-container');
+        container.innerHTML = '';
+
+        for (let w = 1; w <= 4; w++) {
+            const card = document.createElement('div');
+            card.className = 'week-card';
+            
+            let html = `<div class="week-title">Week ${w} <span id="w-stat-${w}" style="font-size:0.9rem; color:var(--text-sub)">Score: 0/6</span></div>`;
+            
+            habitData.forEach((habit, hIdx) => {
+                let doneCount = 0;
+                for(let d=0; d<7; d++) {
+                    if(localStorage.getItem(`2026-${currentMonth}-w${w}-h${hIdx}-d${d}`) === 'true') doneCount++;
+                }
+
+                const isAchieved = doneCount >= habit.target;
+                const progressWidth = (Math.min(doneCount, habit.target) / habit.target) * 100;
+
+                html += `
+                    <div class="habit-item">
+                        <div class="habit-header">
+                            <div>
+                                <div class="habit-name">${habit.name}</div>
+                                <div style="font-size:0.7rem; color:var(--text-sub)">Target: ${habit.target} days</div>
+                            </div>
+                            <div class="habit-status ${isAchieved ? 'status-done' : ''}">
+                                ${doneCount} / ${habit.target}
+                            </div>
+                        </div>
+                        <div class="daily-grid">
+                            ${days.map((d, dIdx) => {
+                                const key = `2026-${currentMonth}-w${w}-h${hIdx}-d${dIdx}`;
+                                const checked = localStorage.getItem(key) === 'true' ? 'checked' : '';
+                                return `
+                                    <div class="day-box">
+                                        <span class="day-label">${d}</span>
+                                        <input type="checkbox" ${checked} onchange="save('${key}')">
+                                    </div>`;
+                            }).join('')}
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-bar ${isAchieved ? 'complete' : ''}" style="width: ${progressWidth}%"></div>
+                        </div>
+                    </div>`;
+            });
+
+            card.innerHTML = html;
+            container.appendChild(card);
+        }
+        calculateStats();
+    }
+
+    function save(key) {
+        const currentVal = localStorage.getItem(key) === 'true';
+        localStorage.setItem(key, !currentVal);
+        render(); // Re-render to update bars and statuses
+    }
+
+    function calculateStats() {
+        let perfectWeeks = 0;
+        for (let w = 1; w <= 4; w++) {
+            let habitsAchievedInWeek = 0;
+
+            habitData.forEach((habit, hIdx) => {
+                let doneCount = 0;
+                for (let d = 0; d < 7; d++) {
+                    if (localStorage.getItem(`2026-${currentMonth}-w${w}-h${hIdx}-d${d}`) === 'true') doneCount++;
+                }
+                if (doneCount >= habit.target) habitsAchievedInWeek++;
+            });
+
+            document.getElementById(`w-stat-${w}`).innerText = `Habits: ${habitsAchievedInWeek}/6`;
+            if (habitsAchievedInWeek === 6) perfectWeeks++;
+        }
+        document.getElementById('monthly-score').innerText = `${perfectWeeks} / 4 Weeks Hit`;
+    }
+
+    init();
+</script>
+</body>
+</html>
